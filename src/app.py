@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Planet, Characters
+from models import db, User, Planet, Characters, Vehicles
 #from models import Person
 
 app = Flask(__name__)
@@ -36,6 +36,9 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
+
+#   Code For GET Methods
+
 @app.route('/users', methods=['GET'])
 def handle_hello():
     users = User.query.all()
@@ -44,8 +47,8 @@ def handle_hello():
         "msg": "Hello, this is your GET /users response ",
         "users": users_list
     }
-
     return jsonify(response_body), 200
+
 
 @app.route('/characters', methods=['GET'])
 def added_characters():
@@ -55,8 +58,21 @@ def added_characters():
         "msg": "Hello, this is your GET /characters response ",
         "characters": characters_list
     }
-
     return jsonify(response_body), 200
+
+
+@app.route('/vehicles', methods=['GET'])
+def added_vehicles():
+    vehicles = Vehicles.query.all()
+    vehicles_list = [item.serialize() for item in vehicles]
+    response_body = {
+        "msg": "Here is a list of the vehicles!",
+        "vehicles": vehicles_list
+    }
+    return jsonify(response_body), 200
+
+
+#   Code For POST Methods
 
 @app.route('/users/favorites/planet', methods=['POST'])
 def fav_planets():
@@ -71,6 +87,7 @@ def fav_planets():
 
     return jsonify(user.serialize()), 200 
 
+
 @app.route('/users/favorites/characters', methods=['POST'])
 def fav_characters():
     data = request.get_json()
@@ -83,6 +100,21 @@ def fav_characters():
     db.session.commit()
 
     return jsonify(user.serialize()), 200
+
+
+@app.route('/users/favorites/vehicles', methods=['POST'])
+def fav_vehicles():
+    data = request.get_json()
+    user_id = data['user']
+    vehicles_id = data['vehicles']
+    user = db.session.get(User, user_id)
+    vehicles = db.session.get(Vehicles, vehicles_id)
+
+    user.favorite_vehicles.append(vehicles)
+    db.session.commit()
+
+    return jsonify(user.serialize()), 200
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
