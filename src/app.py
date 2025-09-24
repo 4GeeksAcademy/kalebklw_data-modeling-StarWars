@@ -38,7 +38,6 @@ def sitemap():
 
 
 #   Code For GET Methods
-
 @app.route('/users', methods=['GET'])
 def handle_hello():
     users = User.query.all()
@@ -60,6 +59,18 @@ def added_characters():
     }
     return jsonify(response_body), 200
 
+@app.route('/characters/<int:character_id>', methods=['GET'])
+def characters_info(character_id):
+    # data = request.get_json()
+    # characters = Characters.query.all()
+    # character_list = [item.serialize() for item in characters]
+    # character_id = data['character']
+    character = db.session.get(Characters, character_id)
+    response_body = {
+        "msg": "This characters information",
+        "character": character.serialize()
+    }
+    return jsonify(response_body), 200
 
 @app.route('/vehicles', methods=['GET'])
 def added_vehicles():
@@ -73,7 +84,6 @@ def added_vehicles():
 
 
 #   Code For POST Methods
-
 @app.route('/users/favorites/planet', methods=['POST'])
 def fav_planets():
     data = request.get_json()
@@ -116,6 +126,17 @@ def fav_vehicles():
     return jsonify(user.serialize()), 200
 
 
+#  Code For DELETE Methods
+@app.route('/users/favorites/characters/<int:character_id>', methods=['DELETE'])
+def delete_fav_char():
+    data = request.get_json()
+    character_id = data['character_id']
+    rec = User.query.filter_by(character_id)
+    db.session.commit()
+
+    return jsonify(rec), 200
+
+    
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))

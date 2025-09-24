@@ -58,11 +58,15 @@ class Planet(db.Model):
 class Characters(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(50), unique=True, nullable=False)
+    eye_color = Column(String(15), unique=False, nullable=False)
+    hair_color = Column(String(15), unique=False, nullable=False)
 
     def serialize(self):
         return {
             "id": self.id,
-            "name": self.name
+            "name": self.name,
+            "eye_color": self.eye_color,
+            "hair_color": self.hair_color
             # do not serialize the password, its a security breach
         }
 
