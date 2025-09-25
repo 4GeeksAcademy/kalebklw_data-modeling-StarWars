@@ -128,13 +128,18 @@ def fav_vehicles():
 
 #  Code For DELETE Methods
 @app.route('/users/favorites/characters/<int:character_id>', methods=['DELETE'])
-def delete_fav_char():
-    data = request.get_json()
-    character_id = data['character_id']
-    rec = User.query.filter_by(character_id)
-    db.session.commit()
+def delete_fav_char(character_id):
+    data = request.get_json() # This is the request body for fetches in general
+    user_id = data['user']
+    user = db.session.get(User, user_id)
+    for character in user.favorite_characters:
+        if character.id == character_id:
+            user.favorite_characters.remove(character)
+            db.session.commit()
+        else:
+            return jsonify({"msg": "character not found"}), 404
 
-    return jsonify(rec), 200
+    return jsonify(user.serialize()), 200
 
     
 # this only runs if `$ python src/app.py` is executed
