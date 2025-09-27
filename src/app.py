@@ -9,14 +9,15 @@ from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User, Planet, Characters, Vehicles
-#from models import Person
+# from models import Person
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace("postgres://", "postgresql://")
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace(
+        "postgres://", "postgresql://")
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////tmp/test.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -27,11 +28,15 @@ CORS(app)
 setup_admin(app)
 
 # Handle/serialize errors like a JSON object
+
+
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
 # generate sitemap with all your endpoints
+
+
 @app.route('/')
 def sitemap():
     return generate_sitemap(app)
@@ -59,16 +64,23 @@ def added_characters():
     }
     return jsonify(response_body), 200
 
+
 @app.route('/characters/<int:character_id>', methods=['GET'])
 def characters_info(character_id):
-    # data = request.get_json()
-    # characters = Characters.query.all()
-    # character_list = [item.serialize() for item in characters]
-    # character_id = data['character']
     character = db.session.get(Characters, character_id)
     response_body = {
         "msg": "This characters information",
         "character": character.serialize()
+    }
+    return jsonify(response_body), 200
+
+@app.route('/planets', methods=['GET'])
+def added_planets():
+    planets = Planet.query.all()
+    planet_list = [item.serialize() for item in planets]
+    response_body = {
+        "msg": "Here is the list of planets",
+        "planets": planet_list
     }
     return jsonify(response_body), 200
 
@@ -95,7 +107,7 @@ def fav_planets():
     user.favorite_planet.append(planet)
     db.session.commit()
 
-    return jsonify(user.serialize()), 200 
+    return jsonify(user.serialize()), 200
 
 
 @app.route('/users/favorites/characters', methods=['POST'])
@@ -127,9 +139,24 @@ def fav_vehicles():
 
 
 #  Code For DELETE Methods
+@app.route('/users/favorites/planet/<int:planet_id>', methods=['DELETE'])
+def delete_fav_planet(planet_id):
+    data = request.get_json()
+    user_id = data['user']
+    user = db.session.get(User, user_id)
+    for planet in user.favorite_planet:
+        if planet.id == planet_id:
+            user.favorite_planet.remove(planet)
+            db.session.commit()
+        else:
+            return jsonify({"msg": "planet not found"}), 404
+
+    return jsonify(user.serialize()), 200
+
+
 @app.route('/users/favorites/characters/<int:character_id>', methods=['DELETE'])
 def delete_fav_char(character_id):
-    data = request.get_json() # This is the request body for fetches in general
+    data = request.get_json()  # This is the request body for fetches in general
     user_id = data['user']
     user = db.session.get(User, user_id)
     for character in user.favorite_characters:
@@ -141,7 +168,22 @@ def delete_fav_char(character_id):
 
     return jsonify(user.serialize()), 200
 
-    
+
+@app.route('/users/favorites/vehicles/<int:vehicle_id>', methods=['DELETE'])
+def delete_fav_vehicles(vehicle_id):
+    data = request.get_json()
+    user_id = data['user']
+    user = db.session.get(User, user_id)
+    for vehicle in user.favorite_vehicles:
+        if vehicle.id == vehicle_id:
+            user.favorite_vehicles.remove(vehicle)
+            db.session.commit()
+        else:
+            return jsonify({"msg": "vehicle not found"}), 404
+
+    return jsonify(user.serialize()), 200
+
+
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
